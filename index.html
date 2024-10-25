@@ -1,1 +1,45 @@
-
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Flight Finder</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="mt-5">Find Your Flight</h1>
+      <form action="/search" method="post" class="mt-3">
+        <div class="form-group">
+          <label for="origin">Origin</label>
+          <input type="text" class="form-control" id="origin" name="origin" required>
+        </div>
+        <div class="form-group">
+          <label for="destination">Destination</label>
+          <input type="text" class="form-control" id="destination" name="destination" required>
+        </div>
+        <div class="form-group">
+          <label for="departureDate">Departure Date</label>
+          <input type="date" class="form-control" id="departureDate" name="departureDate" required>
+        </div>
+        <div class="form-group">
+          <label for="returnDate">Return Date</label>
+          <input type="date" class="form-control" id="returnDate" name="returnDate">
+        </div>
+        <div class="form-group">
+          <label for="travelClass">Travel Class</label>
+          <select class="form-control" id="travelClass" name="travelClass">
+            <option value="ECONOMY">Economy</option>
+            <option value="BUSINESS">Business</option>
+            <option value="FIRST">First</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="adults">Number of Adults</label>
+          <input type="number" class="form-control" id="adults" name="adults" value="1" min="1" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search Flights</button>
+      </form>
+    </div>
+  </body>
+</html>
