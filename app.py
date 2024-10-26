@@ -8,8 +8,8 @@ app = Flask(__name__)
 auth_url = "https://test.api.amadeus.com/v1/security/oauth2/token"
 
 # Replace with your Amadeus credentials
-client_id = "E0kWNS0pHXmJ8ggvaqJnCreGFAtDQ2r0"
-client_secret = "Xj6DkJByszRh4G76"
+client_id = "kCwc4lbI68ll1ET4nC75qQQuAEL1vbpr"
+client_secret = "r05gfAspJobZ5WTf"
 
 # Request body for authentication
 auth_data = {
