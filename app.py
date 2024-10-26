@@ -4,30 +4,23 @@ import json
 
 app = Flask(__name__)
 
-# Authentication URL
-auth_url = "https://test.api.amadeus.com/v1/security/oauth2/token"
-
 # Replace with your Amadeus credentials
-client_id = "kCwc4lbI68ll1ET4nC75qQQuAEL1vbpr"
-client_secret = "r05gfAspJobZ5WTf"
+client_id = "E0kWNS0pHXmJ8ggvaqJnCreGFAtDQ2r0"
+client_secret = "Xj6DkJByszRh4G76"
 
-# Request body for authentication
-auth_data = {
-    "grant_type": "client_credentials",
-    "client_id": client_id,
-    "client_secret": client_secret
-}
-
-# Get an access token
-auth_response = requests.post(auth_url, data=auth_data)
-
-if auth_response.status_code == 200:
-    access_token = auth_response.json().get("access_token")
-else:
-    raise Exception(f"Failed to get access token: {auth_response.status_code} - {auth_response.text}")
-
-# Flight search URL
-flight_search_url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
+# Function to get an access token
+def get_access_token():
+    auth_url = "https://test.api.amadeus.com/v1/security/oauth2/token"
+    auth_data = {
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret
+    }
+    auth_response = requests.post(auth_url, data=auth_data)
+    if auth_response.status_code == 200:
+        return auth_response.json().get("access_token")
+    else:
+        raise Exception(f"Failed to get access token: {auth_response.status_code} - {auth_response.text}")
 
 @app.route('/')
 def home():
@@ -43,26 +36,43 @@ def search():
     travel_class = request.form['travelClass']
     adults = request.form['adults']
 
+    # Get a fresh access token
+    access_token = get_access_token()
+
     # Set up headers with the access token
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/vnd.amadeus+json",
+        "X-HTTP-Method-Override": "GET"
     }
 
-    # Define the parameters for the flight search
-    params = {
-        "originLocationCode": origin,
-        "destinationLocationCode": destination,
-        "departureDate": departure_date,
-        "returnDate": return_date,
-        "travelClass": travel_class,
-        "adults": adults,
-        "max": 3  # Limit results to 3 flights
+    # Define the request body for the flight search
+    body = {
+        "currencyCode": "USD",
+        "originDestinations": [
+            {
+                "id": "1",
+                "originLocationCode": origin,
+                "destinationLocationCode": destination,
+                "departureDateTimeRange": {
+                    "date": departure_date
+                }
+            }
+        ],
+        "travelers": [
+            {
+                "id": "1",
+                "travelerType": "ADULT"
+            }
+        ],
+        "sources": [
+            "GDS"
+        ]
     }
 
     try:
-        # Make the flight search request
-        response = requests.get(flight_search_url, headers=headers, params=params)
+        # Make the flight search request (using POST with method override)
+        response = requests.post(flight_search_url, headers=headers, json=body)
         response.raise_for_status()
 
         # Check if the request was successful
@@ -87,26 +97,42 @@ def get_alternative_dates(origin, destination, travel_class, adults):
     alternative_dates = ["2024-12-14", "2024-12-16", "2024-12-18"]
     cheaper_flights = []
 
+    # Get a fresh access token
+    access_token = get_access_token()
+
     # Set up headers with the access token
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/vnd.amadeus+json",
+        "X-HTTP-Method-Override": "GET"
     }
 
     for date in alternative_dates:
-        params = {
-            "originLocationCode": origin,
-            "destinationLocationCode": destination,
-            "departureDate": date,
-            "travelClass": travel_class,
-            "adults": adults,
-            "max": 1  # Limit results to 1 flight per date
+        body = {
+            "currencyCode": "USD",
+            "originDestinations": [
+                {
+                    "id": "1",
+                    "originLocationCode": origin,
+                    "destinationLocationCode": destination,
+                    "departureDateTimeRange": {
+                        "date": date
+                    }
+                }
+            ],
+            "travelers": [
+                {
+                    "id": "1",
+                    "travelerType": "ADULT"
+                }
+            ],
+            "sources": [
+                "GDS"
+            ]
         }
 
         try:
-            response = requests.post(flight_search_url, headers=headers, json=params)
-
-        
+            response = requests.post(flight_search_url, headers=headers, json=body)
             response.raise_for_status()
             flight_data = response.json()
             if flight_data.get("data"):
