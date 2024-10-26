@@ -38,11 +38,12 @@ def search():
         "max": 3  # Limit results to 3 flights
     }
 
-    # Make the flight search request
-    response = requests.get(flight_search_url, headers=headers, params=params)
+    try:
+        # Make the flight search request
+        response = requests.get(flight_search_url, headers=headers, params=params)
+        response.raise_for_status()
 
-    # Check if the request was successful
-    if response.status_code == 200:
+        # Check if the request was successful
         flight_data = response.json()
         flights = []
         for flight in flight_data.get("data", [])[:3]:
@@ -50,9 +51,49 @@ def search():
             price = flight.get("price", {}).get("total", "N/A")
             airline = flight.get("validatingAirlineCodes", ["N/A"])[0]
             flights.append({"offer_id": offer_id, "price": price, "airline": airline})
-        return render_template('results.html', flights=flights)
-    else:
-        return f"Error: {response.status_code} - {response.text}"
+
+        # Suggest alternative dates for cheaper flights
+        alternative_dates = get_alternative_dates(origin, destination, travel_class, adults)
+
+        return render_template('results.html', flights=flights, alternative_dates=alternative_dates)
+    except requests.exceptions.RequestException as e:
+        return render_template('error.html', error_message="An error occurred while fetching flight data. Please check your input or try again later.")
+
+# Function to get alternative dates for cheaper flights
+def get_alternative_dates(origin, destination, travel_class, adults):
+    # Define alternative dates to check
+    alternative_dates = ["2024-12-14", "2024-12-16", "2024-12-18"]
+    cheaper_flights = []
+
+    # Set up headers with the access token
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    for date in alternative_dates:
+        params = {
+            "originLocationCode": origin,
+            "destinationLocationCode": destination,
+            "departureDate": date,
+            "travelClass": travel_class,
+            "adults": adults,
+            "max": 1  # Limit results to 1 flight per date
+        }
+
+        try:
+            response = requests.get(flight_search_url, headers=headers, params=params)
+            response.raise_for_status()
+            flight_data = response.json()
+            if flight_data.get("data"):
+                flight = flight_data["data"][0]
+                price = flight.get("price", {}).get("total", "N/A")
+                cheaper_flights.append({"date": date, "price": f"${price}"})
+        except requests.exceptions.RequestException:
+            continue
+
+    return cheaper_flights
 
 if __name__ == "__main__":
     app.run(debug=True)
+
