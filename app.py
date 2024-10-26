@@ -104,7 +104,9 @@ def get_alternative_dates(origin, destination, travel_class, adults):
         }
 
         try:
-            response = requests.get(flight_search_url, headers=headers, params=params)
+            response = requests.post(flight_search_url, headers=headers, json=params)
+
+        
             response.raise_for_status()
             flight_data = response.json()
             if flight_data.get("data"):
