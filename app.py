@@ -1,9 +1,10 @@
 from flask import Flask, request, render_template
 import requests
+import json
 
 app = Flask(__name__)
 
-# Amadeus API Credentials
+# Replace with your Amadeus credentials
 client_id = "kCwc4lbI68ll1ET4nC75qQQuAEL1vbpr"
 client_secret = "r05gfAspJobZ5WTf"
 
@@ -41,37 +42,22 @@ def search():
     # Set up headers with the access token
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/vnd.amadeus+json",
-        "X-HTTP-Method-Override": "GET"
+        "Content-Type": "application/json"
     }
 
-    # Define the request body for the flight search
-    body = {
-        "currencyCode": "USD",
-        "originDestinations": [
-            {
-                "id": "1",
-                "originLocationCode": origin,
-                "destinationLocationCode": destination,
-                "departureDateTimeRange": {
-                    "date": departure_date
-                }
-            }
-        ],
-        "travelers": [
-            {
-                "id": "1",
-                "travelerType": "ADULT"
-            }
-        ],
-        "sources": [
-            "GDS"
-        ]
+    # Define the parameters for the flight search
+    params = {
+        "originLocationCode": origin,
+        "destinationLocationCode": destination,
+        "departureDate": departure_date,
+        "returnDate": return_date,
+        "travelClass": travel_class,
+        "adults": adults
     }
 
     try:
-        # Make the flight search request (using POST with method override)
-        response = requests.post("https://test.api.amadeus.com/v2/shopping/flight-offers", headers=headers, json=body)
+        # Make the flight search request using GET
+        response = requests.get("https://test.api.amadeus.com/v2/shopping/flight-offers", headers=headers, params=params)
         response.raise_for_status()
 
         # Check if the request was successful
