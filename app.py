@@ -1,10 +1,9 @@
 from flask import Flask, request, render_template
 import requests
-import json
 
 app = Flask(__name__)
 
-# Replace with your Amadeus credentials
+# Amadeus API Credentials
 client_id = "kCwc4lbI68ll1ET4nC75qQQuAEL1vbpr"
 client_secret = "r05gfAspJobZ5WTf"
 
@@ -72,7 +71,7 @@ def search():
 
     try:
         # Make the flight search request (using POST with method override)
-        response = requests.post(flight_search_url, headers=headers, json=body)
+        response = requests.post("https://test.api.amadeus.com/v2/shopping/flight-offers", headers=headers, json=body)
         response.raise_for_status()
 
         # Check if the request was successful
@@ -84,65 +83,9 @@ def search():
             airline = flight.get("validatingAirlineCodes", ["N/A"])[0]
             flights.append({"offer_id": offer_id, "price": price, "airline": airline})
 
-        # Suggest alternative dates for cheaper flights
-        alternative_dates = get_alternative_dates(origin, destination, travel_class, adults)
-
-        return render_template('results.html', flights=flights, alternative_dates=alternative_dates)
+        return render_template('results.html', flights=flights)
     except requests.exceptions.RequestException as e:
         return render_template('error.html', error_message="An error occurred while fetching flight data. Please check your input or try again later.")
-
-# Function to get alternative dates for cheaper flights
-def get_alternative_dates(origin, destination, travel_class, adults):
-    # Define alternative dates to check
-    alternative_dates = ["2024-12-14", "2024-12-16", "2024-12-18"]
-    cheaper_flights = []
-
-    # Get a fresh access token
-    access_token = get_access_token()
-
-    # Set up headers with the access token
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/vnd.amadeus+json",
-        "X-HTTP-Method-Override": "GET"
-    }
-
-    for date in alternative_dates:
-        body = {
-            "currencyCode": "USD",
-            "originDestinations": [
-                {
-                    "id": "1",
-                    "originLocationCode": origin,
-                    "destinationLocationCode": destination,
-                    "departureDateTimeRange": {
-                        "date": date
-                    }
-                }
-            ],
-            "travelers": [
-                {
-                    "id": "1",
-                    "travelerType": "ADULT"
-                }
-            ],
-            "sources": [
-                "GDS"
-            ]
-        }
-
-        try:
-            response = requests.post(flight_search_url, headers=headers, json=body)
-            response.raise_for_status()
-            flight_data = response.json()
-            if flight_data.get("data"):
-                flight = flight_data["data"][0]
-                price = flight.get("price", {}).get("total", "N/A")
-                cheaper_flights.append({"date": date, "price": f"${price}"})
-        except requests.exceptions.RequestException:
-            continue
-
-    return cheaper_flights
 
 if __name__ == "__main__":
     app.run(debug=True)
