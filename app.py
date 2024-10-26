@@ -4,6 +4,28 @@ import json
 
 app = Flask(__name__)
 
+# Authentication URL
+auth_url = "https://test.api.amadeus.com/v1/security/oauth2/token"
+
+# Replace with your Amadeus credentials
+client_id = "E0kWNS0pHXmJ8ggvaqJnCreGFAtDQ2r0"
+client_secret = "Xj6DkJByszRh4G76"
+
+# Request body for authentication
+auth_data = {
+    "grant_type": "client_credentials",
+    "client_id": client_id,
+    "client_secret": client_secret
+}
+
+# Get an access token
+auth_response = requests.post(auth_url, data=auth_data)
+
+if auth_response.status_code == 200:
+    access_token = auth_response.json().get("access_token")
+else:
+    raise Exception(f"Failed to get access token: {auth_response.status_code} - {auth_response.text}")
+
 # Flight search URL
 flight_search_url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
 
@@ -96,4 +118,3 @@ def get_alternative_dates(origin, destination, travel_class, adults):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
